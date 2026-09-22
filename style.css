@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&display=swap');
+
+:root {
+    --bg-deep: #080606;
+    --bg-middle: #1a0d0a;
+    --flame: #ff8c2a;
+    --flame-soft: #ffb05c;
+    --ember: #ffd7a6;
+    --shadow: rgba(0, 0, 0, 0.8);
+    --gold: #c79b58;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    min-height: 100%;
+    background: radial-gradient(circle at center, #2a1008 0%, var(--bg-middle) 22%, var(--bg-deep) 72%, #030303 100%);
+    color: var(--ember);
+    font-family: 'Cinzel', Georgia, serif;
+}
+
+body {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    padding: 20px;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 140, 42, 0.12), transparent 35%, rgba(0,0,0,0.35));
+    pointer-events: none;
+}
+
+.brand-header {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    width: min(90vw, 900px);
+    padding: clamp(18px, 4vw, 34px) clamp(20px, 5vw, 52px);
+    border: 2px solid rgba(255, 170, 85, 0.35);
+    background: rgba(17, 8, 7, 0.4);
+    box-shadow: 0 0 30px rgba(255, 120, 24, 0.12), inset 0 0 18px rgba(255, 140, 42, 0.08);
+    backdrop-filter: blur(1px);
+}
+
+h1 {
+    margin: 0;
+    font-size: clamp(1.6rem, 5vw, 5rem);
+    line-height: 1.1;
+    letter-spacing: 0.08em;
+    text-transform: none;
+    color: var(--flame-soft);
+    font-weight: 700;
+    text-shadow:
+        0 0 8px rgba(255, 176, 92, 0.35),
+        0 0 18px rgba(255, 120, 24, 0.6),
+        2px 2px 0 rgba(80, 20, 0, 0.8);
+    word-break: break-word;
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 16px;
+    }
+
+    .brand-header {
+        width: 100%;
+        padding: 18px 14px;
+        border-width: 1.5px;
+    }
+
+    h1 {
+        letter-spacing: 0.06em;
+    }
+}
