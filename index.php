@@ -9,7 +9,7 @@
 <body>
     <header class="brand-header">
         <h1>Clan Horizon!</h1>
-        <h2>Tjena Lamin</h2>
+        <h1>TJENA LAMIN LÄGET!!!!</h1>
     </header>
 </body>
 </html>
