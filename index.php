@@ -9,7 +9,7 @@
 <body>
     <header class="brand-header">
         <h1>Clan Horizon!</h1>
-          <h1>jet</h1>
+          <h1>test paragraph</h1>
     </header>
 </body>
 </html>
