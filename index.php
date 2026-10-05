@@ -52,13 +52,22 @@ try {
         if (isset($_POST['save_post'])) {
             $title = trim((string) ($_POST['title'] ?? ''));
             $description = trim((string) ($_POST['description'] ?? ''));
+            $postDate = trim((string) ($_POST['created'] ?? ''));
+            $parsedPostDate = DateTimeImmutable::createFromFormat('!Y-m-d', $postDate);
+            $dateErrors = DateTimeImmutable::getLastErrors();
+            $validPostDate = $parsedPostDate !== false
+                && ($dateErrors === false || ($dateErrors['warning_count'] === 0 && $dateErrors['error_count'] === 0))
+                && $parsedPostDate->format('Y-m-d') === $postDate;
 
-            if ($title !== '' && $description !== '') {
-                $stmt = $pdo->prepare('INSERT INTO dbo.posts (title, description) VALUES (:title, :description)');
+            if ($title !== '' && $description !== '' && $validPostDate) {
+                $stmt = $pdo->prepare('INSERT INTO dbo.posts (title, description, created) VALUES (:title, :description, :created)');
                 $stmt->execute([
                     ':title' => $title,
                     ':description' => $description,
+                    ':created' => $postDate,
                 ]);
+            } elseif (!$validPostDate) {
+                $dbError = 'Välj ett giltigt datum för inlägget.';
             }
         }
 
@@ -95,7 +104,7 @@ $totalTime = formatMinutes($totalMinutes);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Study Ledger</title>
+    <title>Cloud 365</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -103,7 +112,7 @@ $totalTime = formatMinutes($totalMinutes);
         <header class="topbar">
             <div>
                 <p class="eyebrow">Knowledge system</p>
-                <h1>Study Ledger</h1>
+                <h1>Cloud 365</h1>
             </div>
             <div class="status-pill">
                 <span class="status-dot"></span>
@@ -147,6 +156,10 @@ $totalTime = formatMinutes($totalMinutes);
                     <label>
                         <span>Vad har du studerat?</span>
                         <textarea name="description" rows="5" maxlength="2000" required></textarea>
+                    </label>
+                    <label>
+                        <span>Datum</span>
+                        <input type="date" name="created" value="<?php echo htmlspecialchars(date('Y-m-d'), ENT_QUOTES, 'UTF-8'); ?>" required>
                     </label>
                     <button type="submit" name="save_post">Spara inlägg</button>
                 </form>
