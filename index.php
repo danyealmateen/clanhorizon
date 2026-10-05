@@ -30,12 +30,18 @@ function createSqlConnection(string $dbHost, string $dbName, string $dbUser, str
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ];
 
+    $isLocalServer = PHP_SAPI === 'cli-server';
+    if ($isLocalServer && ($dbUser === '' || $dbPass === '')) {
+        throw new RuntimeException('Lokal körning kräver AZURE_SQL_USERNAME och AZURE_SQL_PASSWORD. Starta om PHP-servern från en terminal där dessa variabler är satta.');
+    }
+
+    $dsn = "sqlsrv:Server={$dbHost},1433;Database={$dbName};Encrypt=true;TrustServerCertificate=false;LoginTimeout=8";
+
     if ($dbUser !== '' && $dbPass !== '') {
-        $dsn = "sqlsrv:Server={$dbHost},1433;Database={$dbName};Encrypt=true;TrustServerCertificate=false;LoginTimeout=30";
         return new PDO($dsn, $dbUser, $dbPass, $options);
     }
 
-    $dsn = "sqlsrv:Server={$dbHost},1433;Database={$dbName};Authentication=ActiveDirectoryMSI;Encrypt=true;TrustServerCertificate=false;LoginTimeout=30";
+    $dsn .= ';Authentication=ActiveDirectoryMSI';
     return new PDO($dsn, null, null, $options);
 }
 
@@ -76,7 +82,10 @@ try {
     $postsStmt = $pdo->query('SELECT TOP 10 id, title, description, created_at FROM dbo.posts ORDER BY created_at DESC');
     $posts = $postsStmt->fetchAll();
 } catch (Throwable $e) {
-    $dbError = 'Kunde inte ansluta till Azure SQL-databasen. ' . $e->getMessage();
+    error_log('Azure SQL connection/request failed: ' . $e->getMessage());
+    $dbError = $e instanceof RuntimeException && PHP_SAPI === 'cli-server'
+        ? $e->getMessage()
+        : 'Kunde inte nå Azure SQL just nu. Kontrollera inloggning, nätverksregler och att databasen är tillgänglig. Försök sedan ladda om sidan.';
 }
 
 $totalTime = formatMinutes($totalMinutes);
