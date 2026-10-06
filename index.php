@@ -110,11 +110,15 @@ try {
             $postId = (int) ($_POST['post_id'] ?? 0);
 
             if ($postId > 0) {
+                $pdo->beginTransaction();
+                $deleteTime = $pdo->prepare('DELETE FROM dbo.study_sessions WHERE post_id = :post_id');
+                $deleteTime->execute([':post_id' => $postId]);
                 $stmt = $pdo->prepare('INSERT INTO dbo.study_sessions (minutes, post_id) VALUES (:minutes, :post_id)');
                 $stmt->execute([
                     ':minutes' => (string) $minutes,
                     ':post_id' => $postId,
                 ]);
+                $pdo->commit();
                 header('Location: index.php');
                 exit;
             }
