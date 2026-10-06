@@ -289,6 +289,13 @@ button:hover {
     line-height: 1.6;
 }
 
+.post-item .post-study-time {
+    margin-top: 12px;
+    color: var(--accent);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
 .empty-state,
 .alert {
     padding: 14px 16px;

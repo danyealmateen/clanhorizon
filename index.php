@@ -88,7 +88,7 @@ try {
     $totalResult = $pdo->query('SELECT SUM(CAST(minutes AS INT)) AS total_minutes FROM dbo.study_sessions');
     $totalMinutes = (int) ($totalResult->fetchColumn() ?? 0);
 
-    $postsStmt = $pdo->query('SELECT TOP 10 id, title, description, post_date FROM dbo.posts ORDER BY post_date DESC, id DESC');
+    $postsStmt = $pdo->query('SELECT TOP 10 p.id, p.title, p.description, p.post_date, COALESCE(s.total_minutes, 0) AS total_minutes FROM dbo.posts p LEFT JOIN (SELECT post_id, SUM(CAST(minutes AS INT)) AS total_minutes FROM dbo.study_sessions GROUP BY post_id) s ON s.post_id = p.id ORDER BY p.post_date DESC, p.id DESC');
     $posts = $postsStmt->fetchAll();
 } catch (Throwable $e) {
     error_log('Azure SQL connection/request failed: ' . $e->getMessage());
@@ -205,6 +205,7 @@ $totalTime = formatMinutes($totalMinutes);
                                 </div>
                                 <h4><?php echo htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8'); ?></h4>
                                 <p><?php echo nl2br(htmlspecialchars($post['description'], ENT_QUOTES, 'UTF-8')); ?></p>
+                                <p class="post-study-time">Studietid: <?php echo (int) $post['total_minutes']; ?> min</p>
                             </article>
                         <?php endforeach; ?>
                     </div>
