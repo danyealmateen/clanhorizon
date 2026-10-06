@@ -102,6 +102,23 @@ h1 {
     box-shadow: 0 0 9px rgba(0, 240, 220, 0.62);
 }
 
+.logout-form {
+    display: inline;
+}
+
+.logout-button {
+    padding: 4px 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.65rem;
+    box-shadow: none;
+}
+
+.logout-button:hover {
+    color: var(--text);
+    box-shadow: none;
+}
+
 .dashboard {
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
@@ -115,6 +132,16 @@ h1 {
     box-shadow: 0 16px 36px var(--shadow), inset 2px 0 0 rgba(0, 240, 220, 0.28);
     padding: 24px;
     min-width: 0;
+}
+
+.login-panel {
+    width: min(100%, 480px);
+    margin: 28px auto 0;
+}
+
+.login-panel h2 {
+    margin: 0 0 20px;
+    font-size: 1.5rem;
 }
 
 .hero-panel {
@@ -264,10 +291,38 @@ button:hover {
 }
 
 .post-item {
+    position: relative;
     padding: 18px 18px 16px;
     border: 1px solid var(--line);
     border-radius: 3px;
     background: rgba(16, 16, 16, 0.94);
+}
+
+.delete-post-form {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: block;
+}
+
+.delete-post-button {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid rgba(255, 70, 70, 0.45);
+    background: transparent;
+    color: #ff5c5c;
+    font-size: 1.4rem;
+    line-height: 1;
+    box-shadow: none;
+}
+
+.delete-post-button:hover {
+    border-color: #ff5c5c;
+    background: rgba(255, 70, 70, 0.12);
+    box-shadow: none;
 }
 
 .post-meta {
