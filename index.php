@@ -16,6 +16,8 @@ $formError = null;
 $pdo = null;
 $posts = [];
 $totalMinutes = 0;
+$timeLogs = ['OCC' => [], 'CLOUD' => []];
+$categoryTotals = ['OCC' => 0, 'CLOUD' => 0];
 $authenticated = isset($_SESSION['user_id']);
 $csrfToken = $_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
 
@@ -122,6 +124,28 @@ try {
                 header('Location: index.php');
                 exit;
             }
+        } elseif ($authenticated && isset($_POST['save_category_time'])) {
+            $category = (string) ($_POST['category'] ?? '');
+            $logDate = trim((string) ($_POST['log_date'] ?? ''));
+            $minutes = (int) ($_POST['minutes'] ?? 0);
+            $parsedLogDate = DateTimeImmutable::createFromFormat('!Y-m-d', $logDate);
+            $dateErrors = DateTimeImmutable::getLastErrors();
+            $validLogDate = $parsedLogDate !== false
+                && ($dateErrors === false || ($dateErrors['warning_count'] === 0 && $dateErrors['error_count'] === 0))
+                && $parsedLogDate->format('Y-m-d') === $logDate;
+
+            if (in_array($category, ['OCC', 'CLOUD'], true) && $validLogDate && $minutes >= 1 && $minutes <= 1440) {
+                $stmt = $pdo->prepare('INSERT INTO dbo.time_logs (category, log_date, minutes) VALUES (:category, :log_date, :minutes)');
+                $stmt->execute([
+                    ':category' => $category,
+                    ':log_date' => $logDate,
+                    ':minutes' => $minutes,
+                ]);
+                header('Location: index.php');
+                exit;
+            }
+
+            $formError = 'Ange ett giltigt datum och mellan 1 och 1440 minuter.';
         } elseif ($authenticated && isset($_POST['delete_post'])) {
             $postId = (int) ($_POST['post_id'] ?? 0);
             if ($postId > 0) {
@@ -149,6 +173,15 @@ try {
 
         $postsStmt = $pdo->query('SELECT TOP 10 p.id, p.title, p.description, p.post_date, COALESCE(s.total_minutes, 0) AS total_minutes FROM dbo.posts p LEFT JOIN (SELECT post_id, SUM(CAST(minutes AS INT)) AS total_minutes FROM dbo.study_sessions GROUP BY post_id) s ON s.post_id = p.id ORDER BY p.post_date DESC, p.id DESC');
         $posts = $postsStmt->fetchAll();
+
+        $timeLogsStmt = $pdo->query('SELECT id, category, log_date, minutes FROM dbo.time_logs ORDER BY log_date DESC, id DESC');
+        foreach ($timeLogsStmt->fetchAll() as $timeLog) {
+            $category = (string) $timeLog['category'];
+            if (isset($timeLogs[$category])) {
+                $timeLogs[$category][] = $timeLog;
+                $categoryTotals[$category] += (int) $timeLog['minutes'];
+            }
+        }
     }
 } catch (Throwable $e) {
     if ($pdo && $pdo->inTransaction()) {
@@ -167,7 +200,7 @@ $totalTime = formatMinutes($totalMinutes);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud 365</title>
+    <title>Danys Dashboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -175,8 +208,8 @@ $totalTime = formatMinutes($totalMinutes);
         <?php if (!$authenticated): ?>
         <header class="topbar">
             <div>
-                <p class="eyebrow">Knowledge system</p>
-                <h1>Cloud 365</h1>
+                <p class="eyebrow">est 2026-09-01</p>
+                <h1>Danys Dashboard</h1>
             </div>
         </header>
         <section class="panel login-panel">
@@ -200,8 +233,8 @@ $totalTime = formatMinutes($totalMinutes);
         <?php else: ?>
         <header class="topbar">
             <div>
-                <p class="eyebrow">Knowledge system</p>
-                <h1>Cloud 365</h1>
+                <p class="eyebrow">est 2026-09-01</p>
+                <h1>Danys Dashboard</h1>
             </div>
             <div class="status-pill">
                 <span class="status-dot"></span>
@@ -279,6 +312,47 @@ $totalTime = formatMinutes($totalMinutes);
                     <button type="submit" name="save_time">Spara tid</button>
                 </form>
             </section>
+
+            <?php foreach (['OCC', 'CLOUD'] as $category): ?>
+                <section class="panel time-log-panel time-log-<?php echo strtolower($category); ?>">
+                    <div class="time-log-heading">
+                        <div>
+                            <p class="section-tag">Tidslogg</p>
+                            <h3><?php echo htmlspecialchars($category, ENT_QUOTES, 'UTF-8'); ?></h3>
+                        </div>
+                        <p class="time-log-total">
+                            <strong><?php echo number_format($categoryTotals[$category] / 60, 2, ',', ' '); ?></strong> timmar
+                        </p>
+                    </div>
+                    <form method="post" class="time-log-form">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+                        <input type="hidden" name="category" value="<?php echo htmlspecialchars($category, ENT_QUOTES, 'UTF-8'); ?>">
+                        <label>
+                            <span>Datum</span>
+                            <input type="date" name="log_date" value="<?php echo htmlspecialchars(date('Y-m-d'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                        </label>
+                        <label>
+                            <span>Minuter</span>
+                            <input type="number" name="minutes" min="1" max="1440" placeholder="60" required>
+                        </label>
+                        <button type="submit" name="save_category_time">Logga tid</button>
+                    </form>
+                    <?php if (empty($timeLogs[$category])): ?>
+                        <p class="empty-state">Ingen tid loggad ännu.</p>
+                    <?php else: ?>
+                        <ul class="time-log-list">
+                            <?php foreach ($timeLogs[$category] as $timeLog): ?>
+                                <li>
+                                    <time datetime="<?php echo htmlspecialchars(date('Y-m-d', strtotime((string) $timeLog['log_date'])), ENT_QUOTES, 'UTF-8'); ?>">
+                                        <?php echo htmlspecialchars(date('Y-m-d', strtotime((string) $timeLog['log_date'])), ENT_QUOTES, 'UTF-8'); ?>
+                                    </time>
+                                    <strong><?php echo (int) $timeLog['minutes']; ?> min</strong>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+                </section>
+            <?php endforeach; ?>
 
             <section class="panel list-panel">
                 <div class="panel-header">
