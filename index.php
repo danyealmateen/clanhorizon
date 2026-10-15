@@ -15,6 +15,8 @@ $dbError = null;
 $formError = null;
 $pdo = null;
 $posts = [];
+$allPosts = [];
+$postCount = 0;
 $totalMinutes = 0;
 $timeLogs = ['OCC' => [], 'CLOUD' => []];
 $categoryTotals = ['OCC' => 0, 'CLOUD' => 0];
@@ -171,6 +173,10 @@ try {
         $totalResult = $pdo->query('SELECT SUM(CAST(minutes AS INT)) AS total_minutes FROM dbo.study_sessions');
         $totalMinutes = (int) ($totalResult->fetchColumn() ?? 0);
 
+        $allPostsStmt = $pdo->query('SELECT id, title, post_date FROM dbo.posts ORDER BY post_date DESC, id DESC');
+        $allPosts = $allPostsStmt->fetchAll();
+        $postCount = count($allPosts);
+
         $postsStmt = $pdo->query('SELECT TOP 10 p.id, p.title, p.description, p.post_date, COALESCE(s.total_minutes, 0) AS total_minutes FROM dbo.posts p LEFT JOIN (SELECT post_id, SUM(CAST(minutes AS INT)) AS total_minutes FROM dbo.study_sessions GROUP BY post_id) s ON s.post_id = p.id ORDER BY p.post_date DESC, p.id DESC');
         $posts = $postsStmt->fetchAll();
 
@@ -269,6 +275,18 @@ $totalTime = formatMinutes($totalMinutes);
                         <span>Minuter</span>
                         <strong><?php echo $totalTime['minutes']; ?></strong>
                     </div>
+                    <div>
+                        <span>OCC</span>
+                        <strong><?php echo number_format($categoryTotals['OCC'] / 60, 2, ',', ' '); ?> h</strong>
+                    </div>
+                    <div>
+                        <span>Cloud</span>
+                        <strong><?php echo number_format($categoryTotals['CLOUD'] / 60, 2, ',', ' '); ?> h</strong>
+                    </div>
+                    <div>
+                        <span>Inlägg totalt</span>
+                        <strong><?php echo $postCount; ?></strong>
+                    </div>
                 </div>
             </section>
 
@@ -300,8 +318,8 @@ $totalTime = formatMinutes($totalMinutes);
                         <span>Inlägg</span>
                         <select name="post_id" required>
                             <option value="">Välj inlägg</option>
-                            <?php foreach ($posts as $post): ?>
-                                <option value="<?php echo (int) $post['id']; ?>"><?php echo htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php foreach ($allPosts as $post): ?>
+                                <option value="<?php echo (int) $post['id']; ?>"><?php echo htmlspecialchars($post['title'] . ' — ' . date('Y-m-d', strtotime($post['post_date'])), ENT_QUOTES, 'UTF-8'); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
@@ -390,4 +408,3 @@ $totalTime = formatMinutes($totalMinutes);
     </div>
 </body>
 </html>
-

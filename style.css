@@ -168,14 +168,14 @@ h1 {
 }
 
 .summary-grid {
-    display: flex;
-    gap: 18px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    width: min(100%, 510px);
 }
 
 .summary-grid div {
-    min-width: 110px;
+    min-width: 0;
     padding: 12px 14px;
     border: 1px solid var(--line);
     border-radius: 3px;
@@ -194,6 +194,7 @@ h1 {
     display: block;
     margin-top: 8px;
     font-size: 1.5rem;
+    overflow-wrap: anywhere;
 }
 
 .form-panel h3,
@@ -459,11 +460,11 @@ button:hover {
     }
 
     .summary-grid {
-        gap: 10px;
+        gap: 8px;
     }
 
     .summary-grid div {
-        min-width: 90px;
+        padding: 10px;
     }
 }
 
@@ -560,4 +561,3 @@ button:hover {
         padding: 11px 12px;
     }
 }
-
